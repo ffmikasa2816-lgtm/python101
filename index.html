@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AccessMap — The Missing Layer</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+:root{--bg:#f7f5f0;--ink:#24342f;--muted:#68766f;--green:#285c49;--line:#e6e4dc;--white:#fff}
+*{box-sizing:border-box}body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--ink)}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:20px 7%;background:#fff;border-bottom:1px solid var(--line)}
+.logo{font-size:22px;font-weight:800}.logo span,h1 span{color:var(--green)}.tag{font-size:11px;font-weight:bold;color:var(--green);background:#e7f1e9;padding:9px 12px;border-radius:20px}
+main{max-width:1180px;margin:auto;padding:36px 22px 55px}.hero{display:grid;grid-template-columns:1.3fr .7fr;gap:24px;align-items:center}
+.eyebrow{font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--green);font-weight:bold}h1{font-size:clamp(38px,5vw,60px);line-height:1.04;letter-spacing:-2px;margin:14px 0}.intro{max-width:600px;line-height:1.8;color:var(--muted)}
+.note{background:var(--green);color:white;border-radius:20px;padding:24px}.note .big{font-size:32px;font-weight:bold;margin:10px 0}.note p{line-height:1.7;color:#e2eee6;font-size:14px}
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;margin:26px 0 18px}.toolbar input,.toolbar select{background:#fff;border:1px solid var(--line);border-radius:10px;padding:13px;color:var(--ink)}.toolbar input{flex:1;min-width:190px}
+button{border:0;border-radius:10px;background:var(--green);color:#fff;padding:12px 16px;font-weight:bold;cursor:pointer}button:hover{filter:brightness(1.1)}
+.heading{display:flex;justify-content:space-between;gap:12px;align-items:center;margin:26px 0 14px}h2{font-size:21px;margin:0}.muted{font-size:12px;color:var(--muted)}
+.content{display:grid;grid-template-columns:1.1fr .9fr;gap:18px;align-items:start}.panel{min-width:0;background:white;border:1px solid var(--line);border-radius:18px;padding:17px}#map{height:370px;border-radius:12px;overflow:hidden}.mapnote{font-size:12px;line-height:1.6;color:var(--muted);margin:12px 0 0}
+.list{display:grid;gap:11px}.place{border:1px solid var(--line);border-radius:13px;padding:14px}.place-top{display:flex;justify-content:space-between;gap:9px;align-items:start}.place h3{font-size:15px;margin:0 0 6px}.place p{font-size:13px;line-height:1.6;color:var(--muted);margin:8px 0}.status{font-size:10px;font-weight:bold;padding:6px 8px;border-radius:20px;white-space:nowrap}.verified{background:#e7f1e9;color:#285c49}.pending{background:#fff0dc;color:#89551b}.unknown{background:#eee;color:#555}
+.chip{display:inline-block;font-size:10px;background:#f2f3ef;border-radius:7px;padding:7px;margin:3px 3px 0 0}
+.report{display:grid;grid-template-columns:.8fr 1.2fr;gap:18px;margin-top:28px}.report-copy{background:#e8eee7;border-radius:18px;padding:24px}.report-copy p{color:#52655a;font-size:14px;line-height:1.8}
+form{display:grid;gap:12px}label{display:grid;gap:7px;font-size:13px;font-weight:bold}form input,form select,form textarea{width:100%;padding:12px;border:1px solid var(--line);border-radius:9px;font:inherit}textarea{min-height:85px;resize:vertical}#message{font-size:13px;line-height:1.6;color:var(--green)}
+footer{text-align:center;color:var(--muted);padding:24px;font-size:12px;line-height:1.8}.empty{color:var(--muted);padding:18px}
+@media(max-width:760px){header{padding:17px}.hero,.content,.report{grid-template-columns:1fr}main{padding:24px 14px 40px}#map{height:300px}.heading{align-items:flex-start;flex-direction:column}}
+</style>
+</head>
+<body>
+<header><div class="logo">Access<span>Map.</span></div><div class="tag">THE MISSING LAYER</div></header>
+<main>
+<section class="hero"><div><div class="eyebrow">Accessibility starts with information</div><h1>Know before<br>you <span>go.</span></h1><p class="intro">Finding a place is easy. Knowing whether you can access it is harder. AccessMap helps people explore accessibility information, check how reliable it is, and report barriers that others should know about.</p></div><div class="note"><div>OUR CORE IDEA</div><div class="big">More than a pin.</div><p>Every place should show not only what is known, but also when it was checked and what still needs confirmation.</p></div></section>
+<div class="toolbar"><input id="search" type="search" placeholder="Search places or accessibility details..." aria-label="Search places"><select id="filter" aria-label="Filter by status"><option value="all">All information statuses</option><option value="verified">Demo verified</option><option value="pending">Needs confirmation</option><option value="unknown">Unknown information</option></select><button id="searchButton" type="button">Find places</button></div>
+<section><div class="heading"><h2>Explore accessible places</h2><span class="muted">Interactive demo map</span></div><div class="content"><div class="panel"><div id="map"><p style="padding:18px">Loading map…</p></div><p class="mapnote">Map tiles © OpenStreetMap contributors. Example markers are illustrative and do not confirm real-world accessibility. Internet access is required for the map.</p></div><div class="panel"><div class="heading" style="margin-top:0"><h2>Place information</h2><span class="muted" id="resultCount"></span></div><div class="list" id="placeList"></div></div></div></section>
+<section class="report"><div class="report-copy"><div class="eyebrow">Community-powered</div><h2 style="margin-top:12px">Notice a barrier?<br>Let others know.</h2><p>Ramps may be blocked, elevators may be out of service, and entrances may change. A report can help someone plan their visit with better information.</p><p><strong>Demo limitation:</strong> reports exist only in this open page and are not sent to a server.</p></div><div class="panel"><h2 style="margin-bottom:18px">Submit a report</h2><form id="reportForm"><label>Place name<input id="placeName" required placeholder="e.g. Community library"></label><label>What did you notice?<select id="reportType" required><option value="">Choose a report type</option><option>Ramp or step-free entrance</option><option>Blocked pathway</option><option>Elevator unavailable</option><option>Accessible restroom information</option><option>Other accessibility information</option></select></label><label>Details<textarea id="reportDetails" required placeholder="Describe what visitors should know..."></textarea></label><button type="submit">Add demo report</button><div id="message" role="status" aria-live="polite"></div></form></div></section>
+</main><footer>AccessMap — The Missing Layer<br>Student hackathon prototype · Sample data only · Not an official accessibility certification</footer>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const places=[
+{id:1,name:"Community Learning Hub",area:"Chiang Mai · Demo location",status:"verified",statusText:"Demo verified",access:"Step-free entry: example record",updated:"Demo record · Not a real audit",lat:18.7885,lng:98.9853},
+{id:2,name:"Riverside Activity Center",area:"Chiang Mai · Demo location",status:"pending",statusText:"Needs confirmation",access:"Ramp information needs checking",updated:"No real inspection recorded",lat:18.796,lng:98.998},
+{id:3,name:"Neighborhood Meeting Point",area:"Chiang Mai · Demo location",status:"unknown",statusText:"Unknown",access:"Entrance and restroom details unknown",updated:"No real inspection recorded",lat:18.779,lng:98.978}
+];
+let nextId=4,map=null,markers=[];const $=id=>document.getElementById(id);
+function esc(v){return String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function renderMarkers(list){if(!map)return;markers.forEach(m=>map.removeLayer(m));markers=[];list.forEach(p=>markers.push(L.marker([p.lat,p.lng]).addTo(map).bindPopup('<strong>'+esc(p.name)+'</strong><br>'+esc(p.statusText)+'<br>'+esc(p.access))));}
+function focusPlace(id){const p=places.find(x=>x.id===id);if(!p||!map)return;map.setView([p.lat,p.lng],16);const m=markers.find(x=>Math.abs(x.getLatLng().lat-p.lat)<.00001&&Math.abs(x.getLatLng().lng-p.lng)<.00001);if(m)m.openPopup();}
+function renderPlaces(){const q=$('search').value.toLowerCase().trim(),s=$('filter').value;const list=places.filter(p=>(p.name+' '+p.area+' '+p.access+' '+(p.details||'')).toLowerCase().includes(q)&&(s==='all'||p.status===s));$('resultCount').textContent=list.length+' shown';$('placeList').innerHTML=list.length?list.map(p=>`<article class="place"><div class="place-top"><div><h3>${esc(p.name)}</h3><div class="muted">${esc(p.area)}</div></div><span class="status ${p.status}">${esc(p.statusText)}</span></div><p>${esc(p.access)}</p>${p.details?`<p>${esc(p.details)}</p>`:''}<div class="chip">${esc(p.updated)}</div><br><button type="button" style="margin-top:12px" onclick="focusPlace(${p.id})">Show on map</button></article>`).join(''):'<div class="empty">No matching places. Try another search.</div>';renderMarkers(list);}
+$('searchButton').addEventListener('click',renderPlaces);$('search').addEventListener('input',renderPlaces);$('filter').addEventListener('change',renderPlaces);
+$('reportForm').addEventListener('submit',e=>{e.preventDefault();const name=$('placeName').value.trim(),type=$('reportType').value,details=$('reportDetails').value.trim();if(!name||!type||!details)return;places.push({id:nextId++,name,area:"Community report · Location not geocoded",status:"pending",statusText:"Community report",access:type,details,updated:"Just added in this demo session",lat:18.7885,lng:98.9853});renderPlaces();$('message').textContent="Demo report added as unverified. Its map marker uses a placeholder position, not the reported location.";e.target.reset();});
+if(typeof L!=='undefined'){map=L.map('map').setView([18.7885,98.9853],13);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'&copy; OpenStreetMap contributors',maxZoom:19}).addTo(map);}else{$('map').innerHTML='<p style="padding:18px">Map unavailable offline. Place cards and report form can still work.</p>';}
+renderPlaces();
+</script>
+</body>
+</html>
